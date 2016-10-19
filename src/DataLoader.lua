@@ -3,10 +3,11 @@ require 'utils'
 
 local DataLoader = torch.class('DataLoader')
 
-function DataLoader:__init(dataPath, batchSize)
+function DataLoader:__init(dataPath, batchSize, vocabularySize)
   self.batchSize = batchSize == nil and 10 or batchSize
   self.maxIndex, self.word_ids_list, self.pos_mark_entity_list, self.neg_mark_entity_list
     = unpack(self:createData(dataPath))
+  self.maxIndex = vocabularySize == nil and self.maxIndex or vocabularySize
   self.dataSize = #self.word_ids_list
   self.numBatch = math.floor(self.dataSize/self.batchSize)
   self.headList, self.cntList = unpack(self:groupData())
@@ -31,22 +32,22 @@ function DataLoader:nextBatch()
       = self.word_ids_list[dataIndex[i]]
   end
   -- pos_mark_entity_list
-  local currentPosMarkBatch = torch.LongTensor(self.batchSize)
+  local currentPosMarkBatch = torch.LongTensor(self.batchSize, 1)
   local currentPosEntityBatch = torch.DoubleTensor(self.batchSize, 256)
   for i = 1, self.batchSize, 1 do
-    currentPosMarkBatch[{i}] = self.pos_mark_entity_list[dataIndex[i]][1]
+    currentPosMarkBatch[{{i}, {1}}] = self.pos_mark_entity_list[dataIndex[i]][1]
     currentPosEntityBatch[{{i}}] = self.pos_mark_entity_list[dataIndex[i]][2]
   end
   -- neg_mark_entity_list
-  local currentNegMarkBatch = torch.LongTensor(self.batchSize)
+  local currentNegMarkBatch = torch.LongTensor(self.batchSize, 1)
   local currentNegEntityBatch = torch.DoubleTensor(self.batchSize, 256)
   for i = 1, self.batchSize, 1 do
     if #self.neg_mark_entity_list[dataIndex[i]] > 0 then
       local random_id = getRandomInteger(1, #self.neg_mark_entity_list[dataIndex[i]])
-      currentNegMarkBatch[{i}] = self.neg_mark_entity_list[dataIndex[i]][random_id][1]
+      currentNegMarkBatch[{{i}, {1}}] = self.neg_mark_entity_list[dataIndex[i]][random_id][1]
       currentNegEntityBatch[{{i}}] = self.neg_mark_entity_list[dataIndex[i]][random_id][2]
     elseif #self.neg_mark_entity_list[dataIndex[i]] == 0 then
-      currentNegMarkBatch[{i}] = 0
+      currentNegMarkBatch[{{i}, {1}}] = 0
       currentNegEntityBatch[{{i}}]:uniform(-1, 1)-- = torch.rand(256)
       local norm_2 = torch.norm(currentNegEntityBatch[{{i}}])
       currentNegEntityBatch[{{i}}]:div(norm_2)
