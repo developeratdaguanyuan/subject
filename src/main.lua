@@ -2,9 +2,10 @@ require 'nn'
 require 'rnn'
 require 'DataLoader'
 require 'SubjectLSTM'
+require 'SubjectBiLSTM'
 
 local cmd = torch.CmdLine()
-cmd:option('-algorithm', 'lstm', 'Algorithm Options')
+cmd:option('-algorithm', 'bilstm', 'Algorithm Options')
 cmd:option('-trainDataFile', '../data/question_subjectEmbed_train.txt', 'training data file')
 cmd:option('-validDataFile', '../data/question_subjectEmbed_valid.txt', 'validation data file')
 cmd:option('-wordEmbeddingFile', '../data/embedding.txt')
@@ -22,6 +23,14 @@ cmd:option('-printEpoch', 10, 'print training loss every printEpoch iterations')
 
 local opt = cmd:parse(arg)
 
-local subjectLSTM = SubjectLSTM(opt)
-subjectLSTM:train()
+if opt.algorithm == 'lstm' then
+  local subjectLSTM = SubjectLSTM(opt)
+  subjectLSTM:train()
+end
+if opt.algorithm == 'bilstm' then
+  local subjectBiLSTM = SubjectBiLSTM(opt)
+  subjectBiLSTM:train()
+end
+if opt.algorithm == '2bilstm' then
 
+end
